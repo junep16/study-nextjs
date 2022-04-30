@@ -139,64 +139,64 @@ export default Blog
 
  `getStaticProps` 함수가 어떻게 작동하는지에 대한 더욱 자세한 내용은 [Data Fetching documentation](/docs/basic-features/data-fetching/get-static-props.md)을 참고할 수 있습니다.
 
-#### 시나리오 2: Your page paths depend on external data
+#### 시나리오 2: 페이지의 paths(경로)가 외부 데이터에 의존할 때
 
-Next.js allows you to create pages with **dynamic routes**. For example, you can create a file called `pages/posts/[id].js` to show a single blog post based on `id`. This will allow you to show a blog post with `id: 1` when you access `posts/1`.
+Next.js는 **dynamic routes(동적 라우트)**을 활용한 페이지 생성이 가능합니다. 예를 들어 `id`값에 따른 각각의 블로그 포스트를 보여주기 위해 `pages/posts/[id].js`라는 파일을 만들 수 있습니다. `posts/1`로 접근하였을 때 `id: 1`에 의해 블로그 포스팅을 볼 수 있게 됩니다.
 
-> To learn more about dynamic routing, check the [Dynamic Routing documentation](/docs/routing/dynamic-routes.md).
+> dynamic routes(동적 라우트)에 대한 더욱 자세한 설명은 [Dynamic Routing documentation](/docs/routing/dynamic-routes.md)을 참고할 수 있습니다.
 
-However, which `id` you want to pre-render at build time might depend on external data.
+빌드 타임에 어떤 `id`를 프리 렌더링 할 것인지에 대한 여부는 외부 데이터의 값에 의해 결정됩니다.  
 
-**Example**: suppose that you've only added one blog post (with `id: 1`) to the database. In this case, you'd only want to pre-render `posts/1` at build time.
+**예시**: 데이터 베이스에 아이디 값 `id: 1`을 가진 하나의 블로그 포스트를 추가했을 때, 빌드 타임에 `posts/1`만 프리 렌더링을 하고 싶다고 가정합시다.
 
-Later, you might add the second post with `id: 2`. Then you'd want to pre-render `posts/2` as well.
+이후 아이디 값 `id: 2`을 가진 두 번째 포스트를 추가한 후, `posts/2` 또한 프리 렌더 하려고 합니다.
 
-So your page **paths** that are pre-rendered depend on external data**.** To handle this, Next.js lets you `export` an `async` function called `getStaticPaths` from a dynamic page (`pages/posts/[id].js` in this case). This function gets called at build time and lets you specify which paths you want to pre-render.
+페이지의 프리 렌더된 **paths(경로)**는 외부 데이터에 의해 결정됩니다. 이를 조작하기 위해 Next.js에서는 `getStaticPaths`라는 `async`함수를 사용할 수 있으며, 이는 동적 페이지에서의 함수 내보내기가 가능합니다 (현재 케이스에서는 `pages/posts/[id].js`에 해당합니다). 해당 함수는 빌드 타임에 호출되며, 어떤 경로를 프리 렌더 할 것인지 명시할 수 있도록 합니다.  
 
 ```jsx
-// This function gets called at build time
+// 해당 함수는 빌드 타임에 호출됩니다 
 export async function getStaticPaths() {
-  // Call an external API endpoint to get posts
+  // 외부 API endpoint를 호출하여 포스트 데이터를 가져옵니다
   const res = await fetch('https://.../posts')
   const posts = await res.json()
 
-  // Get the paths we want to pre-render based on posts
+  // posts에 따라 프리 렌더 하고 싶은 경로를 가져옵니다 
   const paths = posts.map((post) => ({
     params: { id: post.id },
   }))
 
-  // We'll pre-render only these paths at build time.
-  // { fallback: false } means other routes should 404.
+  // 위에 명시된 경로만 프리 렌더 됩니다  
+  // { fallback: false }은 404로 표시되어야 할 올바르지 않은 경로입니다 
   return { paths, fallback: false }
 }
 ```
 
-Also in `pages/posts/[id].js`, you need to export `getStaticProps` so that you can fetch the data about the post with this `id` and use it to pre-render the page:
+또한 `pages/posts/[id].js`에서  `getStaticProps` 함수를 내보내어야 `id`에 해당하는 데이터를 가져올 수 있으며, 페이지 프리 렌더를 위해 해당 데이터를 사용할 수 있습니다:
 
 ```jsx
 function Post({ post }) {
-  // Render post...
+  // 포스트 들을 렌더링합니다 
 }
 
 export async function getStaticPaths() {
   // ...
 }
 
-// This also gets called at build time
+// 빌드 타임에 호출됩니다  
 export async function getStaticProps({ params }) {
-  // params contains the post `id`.
-  // If the route is like /posts/1, then params.id is 1
+  // 파라미터에 포스트의 `id`을 추가합니다
+  // 경로가 /posts/1 일 경우,  params.id 는 1 입니다
   const res = await fetch(`https://.../posts/${params.id}`)
   const post = await res.json()
 
-  // Pass post data to the page via props
+  // 포스트 데이터를 props로 전달합니다 
   return { props: { post } }
 }
 
 export default Post
 ```
 
-To learn more about how `getStaticPaths` works, check out the [Data Fetching documentation](/docs/basic-features/data-fetching/get-static-paths.md).
+`getStaticPaths`에 대한 자세한 내용은 [Data Fetching documentation](/docs/basic-features/data-fetching/get-static-paths.md)를 참고할 수 있습니다.
 
 ### When should I use Static Generation?
 
